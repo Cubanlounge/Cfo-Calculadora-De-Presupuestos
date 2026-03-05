@@ -1,0 +1,1353 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CFO Freelancer AV con IA — Calculadora de gastos y cobros</title>
+  <style>
+    :root{
+      --bg:#0b1220;
+      --panel:#0f1a2e;
+      --panel2:#0c1628;
+      --text:#e6eefc;
+      --muted:#a7b6d8;
+      --line:#233454;
+      --brand:#7cc4ff;
+      --good:#7dffb2;
+      --warn:#ffd37c;
+      --bad:#ff7c7c;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --r:14px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Liberation Sans", sans-serif;
+      color-scheme: dark;
+    }
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    html{ background: var(--bg); }
+    body{
+      margin:0;
+      font-family:var(--sans);
+      background: radial-gradient(1200px 700px at 10% 0%, #152647 0%, var(--bg) 55%),
+                  radial-gradient(900px 600px at 100% 0%, #113b56 0%, transparent 55%),
+                  var(--bg);
+      background-attachment: fixed;
+      color:var(--text);
+      min-height:100vh;
+      overflow-x:hidden;
+    }
+
+    a{ color: var(--brand); text-decoration:none; }
+    a:hover{ text-decoration:underline; }
+
+    .app{
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: 18px;
+      display: grid;
+      grid-template-columns: 1.35fr .65fr;
+      gap: 14px;
+      min-height: 100vh;
+    }
+
+    .topbar{
+      grid-column: 1 / -1;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      padding: 14px 14px;
+      border:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02)), rgba(15,26,46,.88);
+      border-radius: var(--r);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(8px);
+    }
+    .topbar h1{
+      margin:0;
+      font-size: 16px;
+      letter-spacing: .2px;
+      font-weight: 700;
+    }
+    .topbar .sub{
+      display:flex;
+      flex-wrap:wrap;
+      gap: 8px 12px;
+      align-items:center;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.03);
+    }
+
+    .btnrow{ display:flex; flex-wrap:wrap; gap:8px; justify-content:flex-end; }
+    .btn{
+      appearance:none;
+      border:1px solid var(--line);
+      color: var(--text);
+      background: rgba(255,255,255,.03);
+      padding: 8px 10px;
+      border-radius: 10px;
+      min-width: 0;
+      cursor:pointer;
+      font-weight: 600;
+      font-size: 12px;
+      transition: transform .05s ease, background .15s ease;
+    }
+    .btn:hover{ background: rgba(255,255,255,.06); }
+    .btn:active{ transform: translateY(1px); }
+    .btn.primary{ border-color: rgba(124,196,255,.55); background: rgba(124,196,255,.12); }
+    .btn.danger{ border-color: rgba(255,124,124,.55); background: rgba(255,124,124,.10); }
+
+    .panel{
+      border:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02)), rgba(15,26,46,.88);
+      border-radius: var(--r);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      backdrop-filter: blur(8px);
+    }
+
+    .tabs{
+      display:flex;
+      gap: 6px;
+      padding: 10px;
+      background: rgba(12,22,40,.78);
+      border-bottom:1px solid rgba(35,52,84,.9);
+      position: sticky;
+      top: 10px;
+      z-index: 2;
+    }
+    .tab{
+      padding: 8px 10px;
+      border-radius: 10px;
+      border:1px solid transparent;
+      color: var(--muted);
+      font-weight: 700;
+      font-size: 12px;
+      cursor:pointer;
+      user-select:none;
+    }
+    .tab.active{
+      color: var(--text);
+      border-color: rgba(124,196,255,.45);
+      background: rgba(124,196,255,.10);
+    }
+
+    .content{ padding: 14px; }
+
+    .grid2{ display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .grid3{ display:grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+
+    .card{
+      border:1px solid rgba(35,52,84,.92);
+      border-radius: 14px;
+      background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01)), rgba(12,22,40,.72);
+      padding: 12px;
+    }
+    .card h3{ margin: 0 0 8px; font-size: 13px; }
+    .muted{ color: var(--muted); }
+
+    label{ display:block; font-size: 12px; color: var(--muted); margin: 0 0 6px; }
+    input, select, textarea{
+      width: 100%;
+      padding: 9px 10px;
+      border-radius: 10px;
+      border:1px solid rgba(35,52,84,.95);
+      background: rgba(11,20,38,.92);
+      color: var(--text);
+      outline: none;
+    }
+    input:focus, select:focus, textarea:focus{ border-color: rgba(124,196,255,.60); box-shadow: 0 0 0 3px rgba(124,196,255,.12); }
+    textarea{ min-height: 90px; resize: vertical; }
+
+    input:disabled, textarea:disabled, select:disabled{
+      opacity: 1;
+      color: var(--text);
+      background: rgba(10,19,36,.92);
+      border-color: rgba(35,52,84,.95);
+    }
+
+    .row{ display:flex; gap: 10px; align-items:center; }
+    .row > *{ flex: 1; }
+
+    .btnGroup{ display:flex; flex-wrap:wrap; gap: 10px; }
+    .btnGroup .btn{ flex: 1 1 120px; }
+
+    .table{
+      width:100%;
+      border-collapse: collapse;
+      border-spacing: 0;
+      font-size: 12px;
+    }
+    .table th, .table td{
+      border-bottom: 1px solid rgba(35,52,84,.8);
+      padding: 10px 8px;
+      vertical-align: top;
+    }
+    .table th{
+      text-align:left;
+      color: var(--muted);
+      font-weight: 800;
+      background: rgba(12,22,40,.78);
+      position: sticky;
+      top: 52px;
+      z-index: 1;
+    }
+    .table td.small{ width: 120px; }
+    .table td.tiny{ width: 90px; }
+    .table td.actions{ width: 44px; }
+
+    .kpi{
+      display:flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 14px;
+      position: sticky;
+      top: 10px;
+    }
+
+    .kpi .big{
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: .2px;
+      line-height: 1.1;
+    }
+
+    .line{ display:flex; justify-content:space-between; gap:10px; font-size: 12px; color: var(--muted); align-items: baseline; }
+    .line span{ min-width: 0; }
+    .line b{ color: var(--text); font-weight: 800; }
+
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border:1px solid rgba(35,52,84,.95);
+      font-size: 12px;
+      font-weight: 800;
+      background: rgba(255,255,255,.03);
+    }
+    .badge.good{ border-color: rgba(125,255,178,.35); background: rgba(125,255,178,.10); }
+    .badge.warn{ border-color: rgba(255,211,124,.35); background: rgba(255,211,124,.10); }
+
+    .mono{ font-family: var(--mono); }
+
+    .hint{
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 12px;
+      border:1px dashed rgba(167,182,216,.35);
+      color: var(--muted);
+      font-size: 12px;
+      background: rgba(0,0,0,.12);
+    }
+
+    .hr{ height:1px; background: rgba(35,52,84,.8); margin: 12px 0; }
+
+    .right{ text-align:right; }
+
+    .footbtns{ display:flex; flex-wrap:wrap; gap:8px; }
+
+    .modalBackdrop{ position: fixed; inset: 0; background: rgba(0,0,0,.55); display:flex; align-items:center; justify-content:center; padding: 18px; z-index: 9999; }
+    .modalBox{ width: min(560px, 100%); border:1px solid var(--line); border-radius: var(--r); background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02)), rgba(15,26,46,.94); box-shadow: var(--shadow); padding: 14px; }
+    .modalTitle{ font-weight: 800; font-size: 13px; margin: 0 0 10px; }
+    .modalBody{ font-size: 12px; color: var(--muted); }
+    .modalBody label{ margin-top: 8px; }
+    .modalActions{ display:flex; gap:8px; justify-content:flex-end; margin-top: 12px; }
+
+    @media print{
+      body{ background:#fff; color:#000; }
+      .topbar, .tabs, .footbtns{ display:none !important; }
+      .app{ grid-template-columns: 1fr; max-width: 100%; padding: 0; }
+      .panel, .kpi.panel{ box-shadow:none; border-color:#ddd; background:#fff; }
+      .table th{ position: static; background:#f5f5f5; }
+      input, select, textarea{ border-color:#ddd; color:#000; background:#fff; }
+      .card{ background:#fff; }
+    }
+
+    @media (max-width: 1020px){
+      .app{ grid-template-columns: 1fr; }
+      .kpi{ position: static; }
+      .tabs{ position: static; }
+      .table th{ position: static; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div>
+        <h1>CFO Freelancer audiovisual con IA — calculadora de gastos y cobros</h1>
+        <div class="sub" id="topSub"></div>
+      </div>
+      <div class="btnrow">
+        <button class="btn" id="btnNew">Nuevo</button>
+        <button class="btn primary" id="btnSave">Guardar</button>
+        <button class="btn" id="btnSaveAs">Guardar como…</button>
+        <button class="btn" id="btnExport">Exportar JSON</button>
+        <button class="btn" id="btnImport">Importar JSON</button>
+        <button class="btn" id="btnPrint">Imprimir / PDF</button>
+      </div>
+    </div>
+
+    <div class="panel" id="mainPanel">
+      <div class="tabs" id="tabs"></div>
+      <div class="content" id="content"></div>
+    </div>
+
+    <div class="panel kpi" id="kpiPanel"></div>
+  </div>
+
+  <input type="file" id="fileInput" accept="application/json" style="display:none" />
+
+  <script>
+    // ============================
+    //  CFO Freelancer AV con IA
+    //  Basado en la estructura del Excel:
+    //  CONFIG / HERRAMIENTAS / WORKFLOW / FACTORES / PRESUPUESTO
+    // ============================
+
+    const LS_PROJECT_INDEX = 'cfo_av_ia_projects_v1';
+    const LS_PROJECT_PREFIX = 'cfo_av_ia_project_v1_';
+
+    const uid = () => Math.random().toString(16).slice(2) + Date.now().toString(16);
+
+    const cloneObj = (obj) => {
+      if (typeof structuredClone === 'function') return structuredClone(obj);
+      return JSON.parse(JSON.stringify(obj));
+    };
+
+    const clamp = (n, a, b) => Math.min(b, Math.max(a, n));
+
+    const toNum = (v) => {
+      if (v === null || v === undefined) return 0;
+      if (typeof v === 'number') return Number.isFinite(v) ? v : 0;
+      const s = String(v).trim().replace(',', '.');
+      const n = Number(s);
+      return Number.isFinite(n) ? n : 0;
+    };
+
+    const round2 = (n) => Math.round((n + Number.EPSILON) * 100) / 100;
+
+    const defaultState = () => ({
+      meta: {
+        projectId: null,
+        projectName: 'Proyecto sin nombre',
+        updatedAt: null,
+        notes: ''
+      },
+      config: {
+        currencySymbol: '€',
+        hourlyRate: 60,
+        taxRatePct: 0,
+        includedRevisions: 2,
+        extraRevisionMethod: 'FIJO',
+        extraRevisionFixedPrice: 80,
+        extraRevisionHours: 1.5,
+        deliveryHours: 120,
+        urgencyHardMin: 0.30
+      },
+      tools: [
+        {
+          id: uid(),
+          name: 'Ejemplo - Plan IA',
+          method: 'USO%',
+          monthlyCost: 36,
+          projectsPerMonth: '',
+          usagePercent: 0.43,
+          units: '',
+          costPerUnit: '',
+          notes: 'Ej.: 43% de 36€ = 15,48€'
+        }
+      ],
+      workflow: [
+        { id: uid(), stage: 'Guion', hours: 0 },
+        { id: uid(), stage: 'Storyboard/planificación', hours: 0 },
+        { id: uid(), stage: 'Generación IA (imagen/video)', hours: 0 },
+        { id: uid(), stage: 'Edición / montaje', hours: 0 },
+        { id: uid(), stage: 'Sonido + VO', hours: 0 },
+        { id: uid(), stage: 'Subtítulos', hours: 0 },
+        { id: uid(), stage: 'Export / versiones', hours: 0 },
+      ],
+      factors: {
+        mode: 'PRODUCTO',
+        tools: 0.00,
+        difficulty: 0.25,
+        deliverable: 0.15,
+        usageRights: 0.30,
+        revisions: 0.10,
+        urgency: 0.30,
+        positioning: 0.20
+      },
+      budget: {
+        otherCosts: 0,
+        requestedRevisions: 2,
+        deliverableMinutes: '',
+        scenes: '',
+        versions: ''
+      }
+    });
+
+    let state = loadLastOrDefault();
+    let activeTab = 'PRESUPUESTO';
+
+    const TAB_ORDER = [
+      { key: 'CONFIG', label: 'CONFIG' },
+      { key: 'HERRAMIENTAS', label: 'HERRAMIENTAS' },
+      { key: 'WORKFLOW', label: 'WORKFLOW' },
+      { key: 'FACTORES', label: 'FACTORES' },
+      { key: 'PRESUPUESTO', label: 'PRESUPUESTO' },
+    ];
+
+    function calcExtraRevisionPrice(cfg){
+      const hourly = toNum(cfg.hourlyRate);
+      if (cfg.extraRevisionMethod === 'POR_HORA'){
+        return round2(toNum(cfg.extraRevisionHours) * hourly);
+      }
+      return round2(toNum(cfg.extraRevisionFixedPrice));
+    }
+
+    function calcToolsRowCost(row){
+      const method = row.method;
+      const monthly = toNum(row.monthlyCost);
+      const p = toNum(row.projectsPerMonth);
+      const use = toNum(row.usagePercent);
+      const units = toNum(row.units);
+      const cpu = toNum(row.costPerUnit);
+
+      if (method === 'USO%') return round2(monthly * use);
+      if (method === 'PRORRATEO') return round2(p > 0 ? (monthly / p) : 0);
+      if (method === 'POR_UNIDAD') return round2(units * cpu);
+      return 0;
+    }
+
+    function calcToolsTotal(s){
+      return round2((s.tools || []).reduce((acc, r) => acc + calcToolsRowCost(r), 0));
+    }
+
+    function calcWorkflowRowCost(row, cfg){
+      return round2(toNum(row.hours) * toNum(cfg.hourlyRate));
+    }
+
+    function calcWorkflowTotals(s){
+      const totalHours = round2((s.workflow || []).reduce((acc, r) => acc + toNum(r.hours), 0));
+      const labor = round2((s.workflow || []).reduce((acc, r) => acc + calcWorkflowRowCost(r, s.config), 0));
+      return { totalHours, labor };
+    }
+
+    function calcAppliedFactors(s){
+      const f = s.factors;
+      const cfg = s.config;
+
+      const applied = {
+        tools: toNum(f.tools),
+        difficulty: toNum(f.difficulty),
+        deliverable: toNum(f.deliverable),
+        usageRights: toNum(f.usageRights),
+        revisions: toNum(f.revisions),
+        urgency: toNum(f.urgency),
+        positioning: toNum(f.positioning)
+      };
+
+      if (toNum(cfg.deliveryHours) <= 72){
+        applied.urgency = Math.max(applied.urgency, toNum(cfg.urgencyHardMin));
+      }
+
+      return applied;
+    }
+
+    function calcFactorsMultiplier(s){
+      const applied = calcAppliedFactors(s);
+      const vals = Object.values(applied).map(toNum);
+
+      if (s.factors.mode === 'SUMA'){
+        return round2(1 + vals.reduce((a,b)=>a+b, 0));
+      }
+
+      const m = vals.reduce((acc, v) => acc * (1 + v), 1);
+      return round2(m);
+    }
+
+    function calcBudget(s){
+      const cfg = s.config;
+      const toolsTotal = calcToolsTotal(s);
+      const totals = calcWorkflowTotals(s);
+      const totalHours = totals.totalHours;
+      const labor = totals.labor;
+      const other = round2(toNum(s.budget.otherCosts));
+
+      const requested = Math.max(0, Math.floor(toNum(s.budget.requestedRevisions)));
+      const included = Math.max(0, Math.floor(toNum(cfg.includedRevisions)));
+      const extraRounds = Math.max(0, requested - included);
+      const pricePerExtra = calcExtraRevisionPrice(cfg);
+      const extraRevCost = round2(extraRounds * pricePerExtra);
+
+      const subtotalBase = round2(toolsTotal + labor + other + extraRevCost);
+
+      const multiplier = calcFactorsMultiplier(s);
+      const totalBeforeTax = round2(subtotalBase * multiplier);
+
+      const taxRate = clamp(toNum(cfg.taxRatePct)/100, 0, 1);
+      const tax = round2(totalBeforeTax * taxRate);
+      const totalFinal = round2(totalBeforeTax + tax);
+
+      const effRate = totalHours > 0 ? round2(totalBeforeTax / totalHours) : 0;
+
+      const minutes = toNum(s.budget.deliverableMinutes);
+      const scenes = toNum(s.budget.scenes);
+      const versions = toNum(s.budget.versions);
+      const perMin = minutes > 0 ? round2(totalBeforeTax / minutes) : 0;
+      const perScene = scenes > 0 ? round2(totalBeforeTax / scenes) : 0;
+      const perVersion = versions > 0 ? round2(totalBeforeTax / versions) : 0;
+
+      return {
+        toolsTotal, labor, other,
+        requested, included, extraRounds, pricePerExtra, extraRevCost,
+        subtotalBase,
+        multiplier,
+        totalBeforeTax,
+        taxRate,
+        tax,
+        totalFinal,
+        totalHours,
+        effRate,
+        minutes, scenes, versions, perMin, perScene, perVersion,
+        appliedFactors: calcAppliedFactors(s)
+      };
+    }
+
+    function fmtPct(p){
+      return String(round2(toNum(p)*100)) + '%';
+    }
+
+    function fmtMoney(n){
+      const sym = state.config.currencySymbol || '€';
+      const v = toNum(n);
+      const sign = v < 0 ? '-' : '';
+      const abs = Math.abs(v);
+      const s = abs.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      return sign + sym + s;
+    }
+
+    function fmtNum(n){
+      const v = toNum(n);
+      return v.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function loadProjectIndex(){
+      try{
+        return JSON.parse(localStorage.getItem(LS_PROJECT_INDEX) || '[]');
+      }catch{ return []; }
+    }
+
+    function saveProjectIndex(list){
+      localStorage.setItem(LS_PROJECT_INDEX, JSON.stringify(list));
+    }
+
+    function saveProject(data){
+      const now = new Date().toISOString();
+      data.meta.updatedAt = now;
+      const id = data.meta.projectId || uid();
+      data.meta.projectId = id;
+
+      localStorage.setItem(LS_PROJECT_PREFIX + id, JSON.stringify(data));
+
+      const idx = loadProjectIndex();
+      const exists = idx.find(x => x.id === id);
+      const entry = { id: id, name: data.meta.projectName || 'Proyecto', updatedAt: now };
+      const newIdx = exists ? idx.map(x => x.id === id ? entry : x) : [entry].concat(idx);
+
+      saveProjectIndex(newIdx.slice(0, 30));
+
+      return id;
+    }
+
+    function loadProject(id){
+      const raw = localStorage.getItem(LS_PROJECT_PREFIX + id);
+      if (!raw) return null;
+      try{ return JSON.parse(raw); }catch{ return null; }
+    }
+
+    function loadLastOrDefault(){
+      const idx = loadProjectIndex();
+      if (idx.length){
+        const last = loadProject(idx[0].id);
+        if (last) return last;
+      }
+      return defaultState();
+    }
+
+    function exportJSON(){
+      const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      const safeName = (state.meta.projectName || 'proyecto')
+        .toLowerCase()
+        .replace(/[^a-z0-9 _-]/gi,'')
+        .trim()
+        .replace(/ +/g,'_');
+      a.download = 'CFO_AV_IA_' + (safeName || 'proyecto') + '.json';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(function(){ URL.revokeObjectURL(a.href); }, 800);
+    }
+
+    function cssAttrEscape(v){
+      if (typeof CSS !== 'undefined' && CSS && typeof CSS.escape === 'function') return CSS.escape(String(v));
+      return String(v).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    }
+
+    function render(preserveFocus){
+      let focusBind = null;
+      let selStart = null;
+      let selEnd = null;
+      let isText = false;
+
+      if (preserveFocus){
+        const ae = document.activeElement;
+        if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA')){
+          focusBind = ae.getAttribute('data-bind');
+          if (typeof ae.selectionStart === 'number'){
+            isText = true;
+            selStart = ae.selectionStart;
+            selEnd = ae.selectionEnd;
+          }
+        }
+      }
+
+      renderTop();
+      renderTabs();
+      renderContent();
+      renderKPI();
+
+      if (preserveFocus && focusBind){
+        const el = document.querySelector('[data-bind="' + cssAttrEscape(focusBind) + '"]');
+        if (el){
+          el.focus();
+          if (isText && typeof el.selectionStart === 'number'){
+            const len = String(el.value || '').length;
+            const a = Math.max(0, Math.min(len, selStart));
+            const b = Math.max(0, Math.min(len, selEnd));
+            el.setSelectionRange(a, b);
+          }
+        }
+      }
+    }
+
+    function renderTop(){
+      const idx = loadProjectIndex();
+      const b = calcBudget(state);
+      const updated = state.meta.updatedAt ? new Date(state.meta.updatedAt).toLocaleString('es-ES') : '—';
+      const projectCount = idx.length;
+
+      document.getElementById('topSub').innerHTML =
+        '<span class="pill"><span class="muted">Proyecto:</span> <b>' + escapeHtml(state.meta.projectName || 'Proyecto') + '</b></span>' +
+        '<span class="pill"><span class="muted">Guardados:</span> <b>' + projectCount + '</b></span>' +
+        '<span class="pill"><span class="muted">Actualizado:</span> <span class="mono">' + escapeHtml(updated) + '</span></span>' +
+        '<span class="pill"><span class="muted">Total sin impuestos:</span> <b>' + fmtMoney(b.totalBeforeTax) + '</b></span>';
+    }
+
+    function renderTabs(){
+      const el = document.getElementById('tabs');
+      el.innerHTML = TAB_ORDER.map(function(t){
+        return '<div class="tab ' + (t.key===activeTab ? 'active' : '') + '" data-tab="' + t.key + '">' + t.label + '</div>';
+      }).join('');
+    }
+
+    function renderContent(){
+      const el = document.getElementById('content');
+      if (activeTab === 'CONFIG') el.innerHTML = viewConfig();
+      else if (activeTab === 'HERRAMIENTAS') el.innerHTML = viewTools();
+      else if (activeTab === 'WORKFLOW') el.innerHTML = viewWorkflow();
+      else if (activeTab === 'FACTORES') el.innerHTML = viewFactors();
+      else el.innerHTML = viewBudget();
+    }
+
+    function renderKPI(){
+      const b = calcBudget(state);
+      const urgencyBadge = (toNum(state.config.deliveryHours) <= 72)
+        ? '<span class="badge warn">Urgencia activada · mínimo ' + fmtPct(state.config.urgencyHardMin) + '</span>'
+        : '<span class="badge good">Plazo normal · sin mínimo</span>';
+
+      const kpi = document.getElementById('kpiPanel');
+      kpi.innerHTML =
+        '<div>' +
+          '<div class="muted" style="font-size:12px;">TOTAL FINAL</div>' +
+          '<div class="big">' + fmtMoney(b.totalFinal) + '</div>' +
+          '<div class="muted" style="font-size:12px; margin-top:6px;">(sin impuestos: <b>' + fmtMoney(b.totalBeforeTax) + '</b>)</div>' +
+        '</div>' +
+        urgencyBadge +
+        '<div class="card">' +
+          '<h3>Resumen CFO</h3>' +
+          '<div class="line"><span>Costos directos</span><b>' + fmtMoney(b.toolsTotal + b.labor + b.other) + '</b></div>' +
+          '<div class="line"><span>Revisiones extra</span><b>' + fmtMoney(b.extraRevCost) + '</b></div>' +
+          '<div class="line"><span>Subtotal base</span><b>' + fmtMoney(b.subtotalBase) + '</b></div>' +
+          '<div class="hr"></div>' +
+          '<div class="line"><span>Multiplicador factores</span><b class="mono">× ' + fmtNum(b.multiplier) + '</b></div>' +
+          '<div class="line"><span>Impuesto</span><b>' + fmtMoney(b.tax) + '</b></div>' +
+        '</div>' +
+        '<div class="card">' +
+          '<h3>Métricas</h3>' +
+          '<div class="line"><span>Horas totales</span><b class="mono">' + fmtNum(b.totalHours) + '</b></div>' +
+          '<div class="line"><span>Tarifa efectiva (sin imp.)</span><b class="mono">' + (b.totalHours>0 ? fmtMoney(b.effRate) + '/h' : '—') + '</b></div>' +
+          '<div class="line"><span>Precio / min (opcional)</span><b class="mono">' + (b.minutes>0 ? fmtMoney(b.perMin) : '—') + '</b></div>' +
+          '<div class="line"><span>Precio / escena (opcional)</span><b class="mono">' + (b.scenes>0 ? fmtMoney(b.perScene) : '—') + '</b></div>' +
+          '<div class="line"><span>Precio / versión (opcional)</span><b class="mono">' + (b.versions>0 ? fmtMoney(b.perVersion) : '—') + '</b></div>' +
+        '</div>' +
+        '<div class="card">' +
+          '<h3>Notas del proyecto</h3>' +
+          '<label>Nombre</label>' +
+          '<input data-bind="meta.projectName" value="' + escapeAttr(state.meta.projectName || '') + '" placeholder="Nombre del proyecto" />' +
+          '<div style="height:10px"></div>' +
+          '<label>Notas (interno)</label>' +
+          '<textarea data-bind="meta.notes" placeholder="Alcance, riesgos, acuerdos, supuestos…">' + escapeHtml(state.meta.notes || '') + '</textarea>' +
+          '<div class="hint">Sugerencia: guarda 1 versión por cliente/proyecto y exporta el JSON como respaldo.</div>' +
+        '</div>' +
+        '<div class="footbtns">' +
+          '<button class="btn" data-action="loadProject">Cargar proyecto guardado…</button>' +
+          '<button class="btn danger" data-action="deleteProject">Borrar este proyecto</button>' +
+        '</div>';
+    }
+
+    function viewConfig(){
+      const cfg = state.config;
+      const extraPrice = calcExtraRevisionPrice(cfg);
+
+      return '' +
+        '<div class="grid2">' +
+          '<div class="card">' +
+            '<h3>Configuración global</h3>' +
+            '<div class="grid2">' +
+              '<div><label>Moneda (símbolo)</label><input data-bind="config.currencySymbol" value="' + escapeAttr(cfg.currencySymbol) + '" /></div>' +
+              '<div><label>Tarifa hora base</label><input type="number" step="0.01" data-bind="config.hourlyRate" value="' + escapeAttr(cfg.hourlyRate) + '" /></div>' +
+              '<div><label>IVA/Impuesto (%) (0 si no aplica)</label><input type="number" step="0.01" data-bind="config.taxRatePct" value="' + escapeAttr(cfg.taxRatePct) + '" /></div>' +
+              '<div><label>Revisiones incluidas (por defecto)</label><input type="number" step="1" data-bind="config.includedRevisions" value="' + escapeAttr(cfg.includedRevisions) + '" /></div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="card">' +
+            '<h3>Política de revisiones</h3>' +
+            '<div class="grid2">' +
+              '<div><label>Método ronda adicional</label><select data-bind="config.extraRevisionMethod">' +
+                opt(cfg.extraRevisionMethod, 'FIJO', 'FIJO') +
+                opt(cfg.extraRevisionMethod, 'POR_HORA', 'POR_HORA') +
+              '</select></div>' +
+              '<div><label>Precio aplicado por ronda adicional</label><input value="' + escapeAttr(extraPrice) + '" disabled /></div>' +
+              '<div><label>Precio fijo por ronda adicional</label><input type="number" step="0.01" data-bind="config.extraRevisionFixedPrice" value="' + escapeAttr(cfg.extraRevisionFixedPrice) + '" /></div>' +
+              '<div><label>Horas por ronda adicional (si POR_HORA)</label><input type="number" step="0.01" data-bind="config.extraRevisionHours" value="' + escapeAttr(cfg.extraRevisionHours) + '" /></div>' +
+            '</div>' +
+            '<div class="hint">Consejo: si el cliente es “iterador profesional”, cobra por ronda, no por buena voluntad.</div>' +
+          '</div>' +
+          '<div class="card">' +
+            '<h3>Plazo y urgencia</h3>' +
+            '<div class="grid2">' +
+              '<div><label>Plazo de entrega (horas)</label><input type="number" step="1" data-bind="config.deliveryHours" value="' + escapeAttr(cfg.deliveryHours) + '" /></div>' +
+              '<div><label>Recargo urgencia mínimo (hard)</label><input type="number" step="0.01" data-bind="config.urgencyHardMin" value="' + escapeAttr(cfg.urgencyHardMin) + '" /></div>' +
+            '</div>' +
+            '<div class="hint">Regla: si el plazo ≤ 72h, se aplica al menos el recargo mínimo (hard) aunque el factor de urgencia sea menor.</div>' +
+          '</div>' +
+          '<div class="card">' +
+            '<h3>Atajos (presets rápidos)</h3>' +
+            '<div class="grid2">' +
+              '<div><label>Derechos de uso</label><div class="btnGroup">' +
+                '<button class="btn" data-preset="usageRights" data-value="0">Interno</button>' +
+                '<button class="btn" data-preset="usageRights" data-value="0.3">Comercial</button>' +
+                '<button class="btn" data-preset="usageRights" data-value="0.6">Campaña</button>' +
+              '</div></div>' +
+              '<div><label>Dificultad</label><div class="btnGroup">' +
+                '<button class="btn" data-preset="difficulty" data-value="0.15">Media</button>' +
+                '<button class="btn" data-preset="difficulty" data-value="0.25">Alta</button>' +
+                '<button class="btn" data-preset="difficulty" data-value="0.45">Extrema</button>' +
+              '</div></div>' +
+            '</div>' +
+            '<div class="hint">Presets = conveniencia. La decisión final sigue siendo tuya (y de tu reputación).</div>' +
+          '</div>' +
+        '</div>';
+    }
+
+    function viewTools(){
+      const b = calcBudget(state);
+
+      const rows = (state.tools || []).map(function(r){
+        const cost = calcToolsRowCost(r);
+        return '' +
+          '<tr>' +
+            '<td><input data-bind="tools|' + r.id + '|name" value="' + escapeAttr(r.name || '') + '" placeholder="Herramienta" /></td>' +
+            '<td class="tiny"><select data-bind="tools|' + r.id + '|method">' +
+              opt(r.method, 'USO%', 'USO%') +
+              opt(r.method, 'PRORRATEO', 'PRORRATEO') +
+              opt(r.method, 'POR_UNIDAD', 'POR_UNIDAD') +
+            '</select></td>' +
+            '<td class="small"><input type="number" step="0.01" data-bind="tools|' + r.id + '|monthlyCost" value="' + escapeAttr(r.monthlyCost) + '" /></td>' +
+            '<td class="tiny"><input type="number" step="1" data-bind="tools|' + r.id + '|projectsPerMonth" value="' + escapeAttr(r.projectsPerMonth) + '" placeholder="—" /></td>' +
+            '<td class="tiny"><input type="number" step="0.01" data-bind="tools|' + r.id + '|usagePercent" value="' + escapeAttr(r.usagePercent) + '" placeholder="0.00" /></td>' +
+            '<td class="tiny"><input type="number" step="0.01" data-bind="tools|' + r.id + '|units" value="' + escapeAttr(r.units) + '" placeholder="—" /></td>' +
+            '<td class="small"><input type="number" step="0.01" data-bind="tools|' + r.id + '|costPerUnit" value="' + escapeAttr(r.costPerUnit) + '" placeholder="—" /></td>' +
+            '<td class="small right"><span class="mono">' + fmtMoney(cost) + '</span></td>' +
+            '<td><input data-bind="tools|' + r.id + '|notes" value="' + escapeAttr(r.notes || '') + '" placeholder="Notas" /></td>' +
+            '<td class="actions right"><button class="btn danger" data-action="removeTool" data-id="' + r.id + '" title="Eliminar">×</button></td>' +
+          '</tr>';
+      }).join('');
+
+      return '' +
+        '<div class="card">' +
+          '<h3>Herramientas (costo real proporcional)</h3>' +
+          '<div class="muted" style="font-size:12px; margin-bottom:10px;">' +
+            'Métodos: <b>USO%</b> (porcentaje del plan), <b>PRORRATEO</b> (plan / proyectos al mes), <b>POR_UNIDAD</b> (unidades × costo unidad).' +
+          '</div>' +
+          '<table class="table">' +
+            '<thead><tr>' +
+              '<th>Herramienta</th><th>Método</th><th>Costo mensual</th><th>Proy/mes</th><th>% uso</th><th>Unidades</th><th>Costo/unidad</th><th class="right">Imputado</th><th>Notas</th><th></th>' +
+            '</tr></thead>' +
+            '<tbody>' + (rows || '<tr><td colspan="10" class="muted">No hay herramientas. Añade una.</td></tr>') + '</tbody>' +
+          '</table>' +
+          '<div class="row" style="margin-top:12px;">' +
+            '<button class="btn" data-action="addTool">+ Añadir herramienta</button>' +
+            '<div></div>' +
+            '<div class="right">' +
+              '<div class="muted" style="font-size:12px;">TOTAL herramientas</div>' +
+              '<div class="mono" style="font-size:16px; font-weight:900;">' + fmtMoney(b.toolsTotal) + '</div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="hint">Criterio CFO: “ilimitado” significa “no marginal” para el proveedor, no “gratis” para tu negocio.</div>' +
+        '</div>';
+    }
+
+    function viewWorkflow(){
+      const b = calcBudget(state);
+
+      const rows = (state.workflow || []).map(function(r){
+        const cost = calcWorkflowRowCost(r, state.config);
+        return '' +
+          '<tr>' +
+            '<td><input data-bind="workflow|' + r.id + '|stage" value="' + escapeAttr(r.stage || '') + '" placeholder="Etapa" /></td>' +
+            '<td class="tiny"><input type="number" step="0.25" data-bind="workflow|' + r.id + '|hours" value="' + escapeAttr(r.hours) + '" /></td>' +
+            '<td class="small right"><span class="mono">' + fmtMoney(cost) + '</span></td>' +
+            '<td class="actions right"><button class="btn danger" data-action="removeWorkflow" data-id="' + r.id + '" title="Eliminar">×</button></td>' +
+          '</tr>';
+      }).join('');
+
+      return '' +
+        '<div class="card">' +
+          '<h3>Workflow / Mano de obra</h3>' +
+          '<div class="muted" style="font-size:12px; margin-bottom:10px;">Costo por etapa = horas × tarifa hora base (' + fmtMoney(state.config.hourlyRate) + '/h).</div>' +
+          '<table class="table">' +
+            '<thead><tr><th>Etapa</th><th>Horas</th><th class="right">Costo</th><th></th></tr></thead>' +
+            '<tbody>' + (rows || '<tr><td colspan="4" class="muted">No hay etapas. Añade una.</td></tr>') + '</tbody>' +
+            '<tfoot><tr><td class="right" colspan="2"><b>TOTAL mano de obra</b></td><td class="right"><b class="mono">' + fmtMoney(b.labor) + '</b></td><td></td></tr></tfoot>' +
+          '</table>' +
+          '<div class="row" style="margin-top:12px;">' +
+            '<button class="btn" data-action="addWorkflow">+ Añadir etapa</button>' +
+            '<div></div>' +
+            '<div class="right">' +
+              '<div class="muted" style="font-size:12px;">Horas totales</div>' +
+              '<div class="mono" style="font-size:16px; font-weight:900;">' + fmtNum(b.totalHours) + '</div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="hint">Regla práctica: si las horas “no se pueden estimar”, el alcance tampoco. Ajusta (o renegocia) antes de producir.</div>' +
+        '</div>';
+    }
+
+    function viewFactors(){
+      const b = calcBudget(state);
+      const a = b.appliedFactors;
+
+      function factorRow(key, title, help){
+        const raw = toNum(state.factors[key]);
+        const applied = toNum(a[key]);
+        const isUrgency = key === 'urgency';
+        const warn = isUrgency && (toNum(state.config.deliveryHours) <= 72) && (applied > raw);
+        return '' +
+          '<div class="card">' +
+            '<h3>' + escapeHtml(title) + '</h3>' +
+            '<div class="muted" style="font-size:12px; margin-bottom:10px;">' + escapeHtml(help) + '</div>' +
+            '<div class="grid2">' +
+              '<div>' +
+                '<label>Ajuste % (editable)</label>' +
+                '<input type="number" step="0.01" data-bind="factors.' + key + '" value="' + escapeAttr(raw) + '" />' +
+                '<div class="muted" style="font-size:12px; margin-top:6px;">Ej.: 0.25 = 25%</div>' +
+              '</div>' +
+              '<div>' +
+                '<label>Ajuste aplicado</label>' +
+                '<input value="' + escapeAttr(applied) + '" disabled />' +
+                (warn ? '<div class="muted" style="font-size:12px; margin-top:6px;">Se aplicó el mínimo hard por urgencia.</div>' : '') +
+              '</div>' +
+            '</div>' +
+          '</div>';
+      }
+
+      return '' +
+        '<div class="card">' +
+          '<h3>Factores / recargos</h3>' +
+          '<div class="grid2">' +
+            '<div><label>Modo de aplicación</label><select data-bind="factors.mode">' +
+              opt(state.factors.mode, 'PRODUCTO', 'PRODUCTO (recomendado)') +
+              opt(state.factors.mode, 'SUMA', 'SUMA') +
+            '</select></div>' +
+            '<div><label>Multiplicador total</label><input value="× ' + escapeAttr(b.multiplier) + '" disabled /></div>' +
+          '</div>' +
+          '<div class="hint">PRODUCTO hace que cada recargo “cuente” sin pisarse (más realista cuando hay urgencia + derechos + dificultad, etc.).</div>' +
+        '</div>' +
+        '<div class="grid2" style="margin-top:12px;">' +
+          factorRow('tools', '1) Herramientas (costo real proporcional)', 'Ajusta por complejidad de stack/planes usados.') +
+          factorRow('difficulty', '2) Dificultad', 'Consistencia de personajes, lipsync, realismo, cantidad de escenas.') +
+          factorRow('deliverable', '3) Tipo de entregable', 'Duración, múltiples formatos, VO, música con derechos comerciales, etc.') +
+          factorRow('usageRights', '4) Derechos de uso', '0% si uso interno; cobra siempre si hay explotación comercial.') +
+          factorRow('revisions', '5) Revisiones / alcance', 'Sube si el cliente itera mucho o el alcance está difuso.') +
+          factorRow('urgency', '6) Urgencia', 'Si plazo ≤ 72h aplica al menos el mínimo hard de CONFIG.') +
+          factorRow('positioning', '7) Criterio y posicionamiento', 'Nivel de acabado, consistencia, reputación, estándar del mercado.') +
+        '</div>';
+    }
+
+    function viewBudget(){
+      const b = calcBudget(state);
+      const cfg = state.config;
+
+      const factorLines = [
+        ['Herramientas', b.appliedFactors.tools],
+        ['Dificultad', b.appliedFactors.difficulty],
+        ['Entregable', b.appliedFactors.deliverable],
+        ['Derechos de uso', b.appliedFactors.usageRights],
+        ['Revisiones', b.appliedFactors.revisions],
+        ['Urgencia', b.appliedFactors.urgency],
+        ['Posicionamiento', b.appliedFactors.positioning],
+      ].map(function(x){
+        return '<div class="line"><span>' + escapeHtml(x[0]) + '</span><b class="mono">' + fmtPct(x[1]) + '</b></div>';
+      }).join('');
+
+      return '' +
+        '<div class="grid2">' +
+          '<div class="card">' +
+            '<h3>Costos directos</h3>' +
+            '<div class="line"><span>Costo herramientas (imputado)</span><b>' + fmtMoney(b.toolsTotal) + '</b></div>' +
+            '<div class="line"><span>Mano de obra</span><b>' + fmtMoney(b.labor) + '</b></div>' +
+            '<div class="line"><span>Otros costos (opcional)</span><b>' + fmtMoney(b.other) + '</b></div>' +
+            '<div style="height:10px"></div>' +
+            '<label>Otros costos (opcional)</label>' +
+            '<input type="number" step="0.01" data-bind="budget.otherCosts" value="' + escapeAttr(state.budget.otherCosts) + '" />' +
+            '<div class="hint">Ej.: compra de assets, locución externa, suscripción puntual, música comercial, etc.</div>' +
+          '</div>' +
+          '<div class="card">' +
+            '<h3>Revisiones</h3>' +
+            '<div class="grid2">' +
+              '<div><label>Revisiones solicitadas</label><input type="number" step="1" data-bind="budget.requestedRevisions" value="' + escapeAttr(state.budget.requestedRevisions) + '" /></div>' +
+              '<div><label>Revisiones incluidas (CONFIG)</label><input value="' + escapeAttr(cfg.includedRevisions) + '" disabled /></div>' +
+            '</div>' +
+            '<div class="hr"></div>' +
+            '<div class="line"><span>Rondas extra</span><b class="mono">' + b.extraRounds + '</b></div>' +
+            '<div class="line"><span>Precio por ronda extra</span><b class="mono">' + fmtMoney(b.pricePerExtra) + '</b></div>' +
+            '<div class="line"><span>Costo extra revisiones</span><b>' + fmtMoney(b.extraRevCost) + '</b></div>' +
+            '<div class="hint">No mezcles “rondas extra” con “pequeños cambios”. Los pequeños cambios son el gran agujero negro.</div>' +
+          '</div>' +
+          '<div class="card">' +
+            '<h3>Subtotal base</h3>' +
+            '<div class="line"><span>Subtotal base</span><b>' + fmtMoney(b.subtotalBase) + '</b></div>' +
+            '<div class="muted" style="font-size:12px; margin-top:6px;">= herramientas + mano de obra + otros + revisiones extra</div>' +
+            '<div class="hr"></div>' +
+            '<h3>Factores</h3>' +
+            '<div class="line"><span>Multiplicador</span><b class="mono">× ' + fmtNum(b.multiplier) + '</b></div>' +
+            '<div class="hr"></div>' +
+            factorLines +
+          '</div>' +
+          '<div class="card">' +
+            '<h3>Totales</h3>' +
+            '<div class="line"><span>Total antes de impuestos</span><b>' + fmtMoney(b.totalBeforeTax) + '</b></div>' +
+            '<div class="line"><span>IVA/Impuesto</span><b>' + fmtPct(b.taxRate) + '</b></div>' +
+            '<div class="line"><span>Impuesto</span><b>' + fmtMoney(b.tax) + '</b></div>' +
+            '<div class="hr"></div>' +
+            '<div class="line"><span><b>TOTAL FINAL</b></span><b style="font-size:16px;">' + fmtMoney(b.totalFinal) + '</b></div>' +
+            '<div class="hr"></div>' +
+            '<h3>Métricas del entregable (opcional)</h3>' +
+            '<div class="grid3">' +
+              '<div><label>Duración final (min)</label><input type="number" step="0.01" data-bind="budget.deliverableMinutes" value="' + escapeAttr(state.budget.deliverableMinutes) + '" placeholder="—" /></div>' +
+              '<div><label>Nº escenas</label><input type="number" step="1" data-bind="budget.scenes" value="' + escapeAttr(state.budget.scenes) + '" placeholder="—" /></div>' +
+              '<div><label>Nº formatos/versiones</label><input type="number" step="1" data-bind="budget.versions" value="' + escapeAttr(state.budget.versions) + '" placeholder="—" /></div>' +
+            '</div>' +
+            '<div class="hr"></div>' +
+            '<div class="line"><span>Precio / min (sin imp.)</span><b class="mono">' + (b.minutes>0 ? fmtMoney(b.perMin) : '—') + '</b></div>' +
+            '<div class="line"><span>Precio / escena (sin imp.)</span><b class="mono">' + (b.scenes>0 ? fmtMoney(b.perScene) : '—') + '</b></div>' +
+            '<div class="line"><span>Precio / versión (sin imp.)</span><b class="mono">' + (b.versions>0 ? fmtMoney(b.perVersion) : '—') + '</b></div>' +
+          '</div>' +
+        '</div>';
+    }
+
+    function opt(current, value, label){
+      const sel = String(current) === String(value) ? 'selected' : '';
+      return '<option value="' + escapeAttr(value) + '" ' + sel + '>' + escapeHtml(label) + '</option>';
+    }
+
+    function escapeHtml(s){
+      return String(s == null ? '' : s)
+        .split('&').join('&amp;')
+        .split('<').join('&lt;')
+        .split('>').join('&gt;')
+        .split('"').join('&quot;')
+        .split("'").join('&#039;');
+    }
+
+    function escapeAttr(s){
+      const nl = String.fromCharCode(10);
+      return escapeHtml(s).split(nl).join(' ');
+    }
+
+    function showModal(title, bodyHtml, onMount){
+      const backdrop = document.createElement('div');
+      backdrop.className = 'modalBackdrop';
+      backdrop.innerHTML =
+        '<div class="modalBox" role="dialog" aria-modal="true">' +
+          '<div class="modalTitle">' + escapeHtml(title || '') + '</div>' +
+          '<div class="modalBody">' + (bodyHtml || '') + '</div>' +
+        '</div>';
+      document.body.appendChild(backdrop);
+      const close = function(){ backdrop.remove(); };
+      backdrop.addEventListener('click', function(e){ if (e.target === backdrop) close(); });
+      if (typeof onMount === 'function') onMount(backdrop, close);
+      return { close: close, root: backdrop };
+    }
+
+    function askConfirm(title, message, okText, cancelText, onOk){
+      const html =
+        '<div class="muted" style="font-size:12px; margin-bottom:12px;">' + escapeHtml(message || '') + '</div>' +
+        '<div class="modalActions">' +
+          '<button class="btn" data-m="cancel">' + escapeHtml(cancelText || 'Cancelar') + '</button>' +
+          '<button class="btn primary" data-m="ok">' + escapeHtml(okText || 'Aceptar') + '</button>' +
+        '</div>';
+      return showModal(title || 'Confirmar', html, function(root, close){
+        root.querySelector('[data-m="cancel"]').addEventListener('click', function(){ close(); });
+        root.querySelector('[data-m="ok"]').addEventListener('click', function(){ close(); if (typeof onOk === 'function') onOk(); });
+        root.addEventListener('keydown', function(e){ if (e.key === 'Escape'){ e.preventDefault(); close(); } });
+      });
+    }
+
+    function askText(title, label, initialValue, okText, cancelText, onOk){
+      const inputId = 'm_inp_' + uid();
+      const html =
+        '<label>' + escapeHtml(label || '') + '</label>' +
+        '<input id="' + inputId + '" value="' + escapeAttr(initialValue || '') + '" />' +
+        '<div class="modalActions">' +
+          '<button class="btn" data-m="cancel">' + escapeHtml(cancelText || 'Cancelar') + '</button>' +
+          '<button class="btn primary" data-m="ok">' + escapeHtml(okText || 'Aceptar') + '</button>' +
+        '</div>';
+      return showModal(title || '', html, function(root, close){
+        const inp = root.querySelector('#' + inputId);
+        if (inp){ inp.focus(); inp.select(); }
+        root.querySelector('[data-m="cancel"]').addEventListener('click', function(){ close(); });
+        root.querySelector('[data-m="ok"]').addEventListener('click', function(){
+          const val = inp ? inp.value : '';
+          close();
+          if (typeof onOk === 'function') onOk(val);
+        });
+        root.addEventListener('keydown', function(e){
+          if (e.key === 'Escape'){ e.preventDefault(); close(); }
+          if (e.key === 'Enter'){ e.preventDefault(); const ok = root.querySelector('[data-m="ok"]'); if (ok) ok.click(); }
+        });
+      });
+    }
+
+    function setByBind(bind, value){
+      if (!bind) return;
+
+      if (bind.indexOf('|') >= 0){
+        const parts = bind.split('|');
+        if (parts.length !== 3) return;
+        const arrName = parts[0];
+        const id = parts[1];
+        const field = parts[2];
+        const arr = state[arrName];
+        if (!Array.isArray(arr)) return;
+        const idx = arr.findIndex(function(x){ return x.id === id; });
+        if (idx < 0) return;
+        arr[idx][field] = value;
+        return;
+      }
+
+      const parts2 = bind.split('.');
+      if (parts2.length !== 2) return;
+      const objName = parts2[0];
+      const field2 = parts2[1];
+      if (!state[objName]) state[objName] = {};
+      state[objName][field2] = value;
+    }
+
+    function normalizeAfterInput(bind){
+      if (!bind) return;
+      const numBinds = {
+        'config.hourlyRate':1,'config.taxRatePct':1,'config.includedRevisions':1,'config.extraRevisionFixedPrice':1,'config.extraRevisionHours':1,'config.deliveryHours':1,'config.urgencyHardMin':1,
+        'budget.otherCosts':1,'budget.requestedRevisions':1,'budget.deliverableMinutes':1,'budget.scenes':1,'budget.versions':1,
+        'factors.tools':1,'factors.difficulty':1,'factors.deliverable':1,'factors.usageRights':1,'factors.revisions':1,'factors.urgency':1,'factors.positioning':1
+      };
+
+      const numericToolFields = { monthlyCost:1, projectsPerMonth:1, usagePercent:1, units:1, costPerUnit:1 };
+      const numericWorkflowFields = { hours:1 };
+
+      if (bind.indexOf('|') >= 0){
+        const parts = bind.split('|');
+        if (parts.length !== 3) return;
+        const arrName = parts[0];
+        const id = parts[1];
+        const field = parts[2];
+        if (arrName === 'tools' && numericToolFields[field]){
+          const item = state.tools.find(function(x){ return x.id === id; });
+          if (item) item[field] = (String(item[field]).trim()==='' ? '' : toNum(item[field]));
+        }
+        if (arrName === 'workflow' && numericWorkflowFields[field]){
+          const item2 = state.workflow.find(function(x){ return x.id === id; });
+          if (item2) item2[field] = toNum(item2[field]);
+        }
+        return;
+      }
+
+      if (numBinds[bind]){
+        const parts2 = bind.split('.');
+        const objName = parts2[0];
+        const field2 = parts2[1];
+        const raw = state[objName][field2];
+        state[objName][field2] = (String(raw).trim()==='' ? '' : toNum(raw));
+      }
+    }
+
+    document.getElementById('tabs').addEventListener('click', function(e){
+      const tab = e.target.closest('[data-tab]');
+      if (!tab) return;
+      activeTab = tab.dataset.tab;
+      render(false);
+    });
+
+    document.addEventListener('input', function(e){
+      const el = e.target;
+      const bind = el.getAttribute('data-bind');
+      if (!bind) return;
+      const value = (el.type === 'checkbox') ? el.checked : el.value;
+      setByBind(bind, value);
+      normalizeAfterInput(bind);
+      render(true);
+    });
+
+    document.addEventListener('click', function(e){
+      const tab = e.target.closest('[data-tab]');
+      if (tab) return;
+
+      const act = e.target.closest('[data-action]');
+      if (act){
+        const action = act.dataset.action;
+        const id = act.dataset.id;
+
+        if (action === 'addTool'){
+          state.tools.push({
+            id: uid(), name:'', method:'USO%', monthlyCost:'', projectsPerMonth:'', usagePercent:'', units:'', costPerUnit:'', notes:''
+          });
+          render(false);
+          return;
+        }
+
+        if (action === 'removeTool'){
+          state.tools = state.tools.filter(function(x){ return x.id !== id; });
+          render(false);
+          return;
+        }
+
+        if (action === 'addWorkflow'){
+          state.workflow.push({ id: uid(), stage:'Nueva etapa', hours:0 });
+          render(false);
+          return;
+        }
+
+        if (action === 'removeWorkflow'){
+          state.workflow = state.workflow.filter(function(x){ return x.id !== id; });
+          render(false);
+          return;
+        }
+
+        if (action === 'loadProject'){
+          openProjectPicker();
+          return;
+        }
+
+        if (action === 'deleteProject'){
+          deleteCurrentProject();
+          return;
+        }
+      }
+
+      const preset = e.target.closest('[data-preset]');
+      if (preset){
+        const key = preset.dataset.preset;
+        const value = toNum(preset.dataset.value);
+        if (key === 'usageRights') state.factors.usageRights = value;
+        if (key === 'difficulty') state.factors.difficulty = value;
+        render(false);
+        return;
+      }
+    });
+
+    document.getElementById('btnNew').addEventListener('click', function(){
+      askConfirm('Nuevo proyecto', 'Crear un proyecto nuevo (se perderán cambios no guardados).', 'Crear', 'Cancelar', function(){
+        state = defaultState();
+        activeTab = 'PRESUPUESTO';
+        render(false);
+      });
+    });
+
+    document.getElementById('btnSave').addEventListener('click', function(){
+      if (!String(state.meta.projectName || '').trim()) state.meta.projectName = 'Proyecto';
+      const id = saveProject(cloneObj(state));
+      state.meta.projectId = id;
+      state.meta.updatedAt = new Date().toISOString();
+      render(false);
+    });
+
+    document.getElementById('btnSaveAs').addEventListener('click', function(){
+      askText('Guardar como…', 'Nombre del proyecto', state.meta.projectName || 'Proyecto', 'Guardar', 'Cancelar', function(name){
+        const nm = String(name || '').trim() || 'Proyecto';
+        const copy = cloneObj(state);
+        copy.meta.projectId = null;
+        copy.meta.projectName = nm;
+        const id = saveProject(copy);
+        const loaded = loadProject(id);
+        state = loaded || copy;
+        render(false);
+      });
+    });
+
+    document.getElementById('btnExport').addEventListener('click', exportJSON);
+
+    document.getElementById('btnImport').addEventListener('click', function(){
+      document.getElementById('fileInput').click();
+    });
+
+    document.getElementById('fileInput').addEventListener('change', function(e){
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      file.text().then(function(txt){
+        const data = JSON.parse(txt);
+        state = mergeDefaults(defaultState(), data);
+        activeTab = 'PRESUPUESTO';
+        render(false);
+      }).catch(function(){
+        alert('No se pudo importar. Verifica que sea un JSON válido exportado por esta app.');
+      }).finally(function(){
+        e.target.value = '';
+      });
+    });
+
+    document.getElementById('btnPrint').addEventListener('click', function(){ window.print(); });
+
+    function openProjectPicker(){
+      const idx = loadProjectIndex();
+      if (!idx.length){
+        showModal('Cargar proyecto guardado',
+          '<div class="muted" style="font-size:12px;">No hay proyectos guardados.</div>' +
+          '<div class="modalActions"><button class="btn primary" data-m="ok">Cerrar</button></div>',
+          function(root, close){
+            root.querySelector('[data-m="ok"]').addEventListener('click', function(){ close(); });
+          }
+        );
+        return;
+      }
+
+      const selectId = 'm_sel_' + uid();
+      const options = idx.map(function(x){
+        const label = String(x.name || 'Proyecto') + ' — ' + new Date(x.updatedAt).toLocaleString('es-ES');
+        return '<option value="' + escapeAttr(x.id) + '">' + escapeHtml(label) + '</option>';
+      }).join('');
+
+      const html =
+        '<label>Selecciona un proyecto</label>' +
+        '<select id="' + selectId + '">' + options + '</select>' +
+        '<div class="modalActions">' +
+          '<button class="btn" data-m="cancel">Cancelar</button>' +
+          '<button class="btn primary" data-m="ok">Cargar</button>' +
+        '</div>';
+
+      showModal('Cargar proyecto guardado', html, function(root, close){
+        const sel = root.querySelector('#' + selectId);
+        if (sel) sel.focus();
+        root.querySelector('[data-m="cancel"]').addEventListener('click', function(){ close(); });
+        root.querySelector('[data-m="ok"]').addEventListener('click', function(){
+          const id = sel ? sel.value : '';
+          const chosen = id ? loadProject(id) : null;
+          if (!chosen){
+            close();
+            showModal('Cargar proyecto guardado',
+              '<div class="muted" style="font-size:12px;">No se pudo cargar el proyecto.</div>' +
+              '<div class="modalActions"><button class="btn primary" data-m="ok">Cerrar</button></div>',
+              function(r, c){ r.querySelector('[data-m="ok"]').addEventListener('click', function(){ c(); }); }
+            );
+            return;
+          }
+          state = chosen;
+          close();
+          render(false);
+        });
+      });
+    }
+
+    function deleteCurrentProject(){
+      if (!state.meta.projectId){
+        alert('Este proyecto aún no está guardado.');
+        return;
+      }
+      askConfirm('Borrar proyecto', 'Esto borrará el proyecto guardado (no se puede deshacer).', 'Borrar', 'Cancelar', function(){
+        const id = state.meta.projectId;
+        localStorage.removeItem(LS_PROJECT_PREFIX + id);
+        const idx = loadProjectIndex().filter(function(x){ return x.id !== id; });
+        saveProjectIndex(idx);
+        state = loadLastOrDefault();
+        render(false);
+      });
+    }
+
+    function mergeDefaults(base, incoming){
+      const out = cloneObj(base);
+      if (!incoming || typeof incoming !== 'object') return out;
+
+      ['meta','config','factors','budget'].forEach(function(k){
+        if (incoming[k] && typeof incoming[k] === 'object'){
+          out[k] = Object.assign({}, out[k], incoming[k]);
+        }
+      });
+
+      if (Array.isArray(incoming.tools)){
+        out.tools = incoming.tools.map(function(t){
+          return {
+            id: t.id || uid(),
+            name: t.name == null ? '' : t.name,
+            method: t.method == null ? 'USO%' : t.method,
+            monthlyCost: t.monthlyCost == null ? '' : t.monthlyCost,
+            projectsPerMonth: t.projectsPerMonth == null ? '' : t.projectsPerMonth,
+            usagePercent: t.usagePercent == null ? '' : t.usagePercent,
+            units: t.units == null ? '' : t.units,
+            costPerUnit: t.costPerUnit == null ? '' : t.costPerUnit,
+            notes: t.notes == null ? '' : t.notes
+          };
+        });
+        if (!out.tools.length) out.tools = base.tools;
+      }
+
+      if (Array.isArray(incoming.workflow)){
+        out.workflow = incoming.workflow.map(function(w){
+          return {
+            id: w.id || uid(),
+            stage: w.stage == null ? 'Etapa' : w.stage,
+            hours: toNum(w.hours == null ? 0 : w.hours)
+          };
+        });
+        if (!out.workflow.length) out.workflow = base.workflow;
+      }
+
+      return out;
+    }
+
+    render(false);
+  </script>
+</body>
+</html>
